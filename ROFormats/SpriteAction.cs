@@ -102,7 +102,7 @@ namespace ROFormats
         }
 
         private List<Act> m_actions;
-        private List<Act> Actions
+        public List<Act> Actions
         {
             get { return m_actions; }
         }
@@ -114,41 +114,6 @@ namespace ROFormats
             set { m_delays = value; }
         }
 
-        private float m_delay;
-        public float Delay
-        {
-            get { return m_delay; }
-            set { m_delay = value; }
-        }
-
-        private int m_action;
-        public int Action
-        {
-            get { return m_action; }
-            set { m_action = value; m_frame = 0; m_delay = 0; }
-        }
-
-        private int m_frame;
-        public int Frame
-        {
-            get { return m_frame; }
-            set { m_frame = value; }
-        }
-
-        private bool m_loop;
-        public bool Loop
-        {
-            get { return m_loop; }
-            set { m_loop = value; }
-        }
-
-        private bool m_playing;
-        public bool Playing
-        {
-            get { return m_playing; }
-            set { m_playing = value; }
-        }
-
         public SpriteAction(Sprite spr)
         {
             m_sprite = spr;
@@ -156,14 +121,6 @@ namespace ROFormats
             m_events = new List<string>();
             m_actions = new List<Act>();
             m_delays = new List<float>();
-        }
-
-        public float GetDelay(int i)
-        {
-            if (i < m_delays.Count)
-                return m_delays[i];
-
-            return 4.0f;
         }
 
         public bool Load(Stream s)

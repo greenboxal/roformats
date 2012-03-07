@@ -46,15 +46,21 @@ namespace ROFormats
         }
 
         private Palette m_palette;
-        internal Palette Palette
+        public Palette Palette
         {
             get { return m_palette; }
-            set { m_palette = value; RemapPalette(); }
         }
 
         public Sprite()
         {
 
+        }
+
+        public virtual void SetPalette(Palette p)
+        {
+            m_palette = p;
+
+            RemapPalette();
         }
 
         public virtual bool Load(Stream s)
@@ -189,21 +195,21 @@ namespace ROFormats
                 byte[] texData = new byte[w * h * 4];
                 for (int i = 0; i < texData.Length; i += 4)
                 {
-                    byte idx = data[i];
+                    byte idx = data[i / 4];
                     ROFormats.Palette.Color c = m_palette.Colors[idx];
 
                     if (idx == 0)
                     {
-                        texData[i] = 255;
-                        texData[i + 1] = 255;
-                        texData[i + 2] = 255;
+                        texData[i + 0] = 0;
+                        texData[i + 1] = 0;
+                        texData[i + 2] = 0;
                         texData[i + 3] = 0;
                     }
                     else
                     {
-                        texData[i] = c.R;
-                        texData[i + 1] = c.R;
-                        texData[i + 2] = c.G;
+                        texData[i + 0] = c.R;
+                        texData[i + 1] = c.G;
+                        texData[i + 2] = c.B;
                         texData[i + 3] = 255;
                     }
                 }
