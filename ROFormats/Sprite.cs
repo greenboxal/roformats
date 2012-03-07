@@ -39,7 +39,7 @@ namespace ROFormats
         }
 
         private RawImage[] m_images;
-        public RawImage[] Images
+        public RawImage[] RawImages
         {
             get { return m_images; }
             set { m_images = value; }
