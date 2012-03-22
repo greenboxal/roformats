@@ -42,7 +42,7 @@ namespace ROFormats
             }
 
             if (i < size)
-                br.ReadBytes(size - i);
+                br.ReadBytes(size - i - 1);
 
             return str;
         }
