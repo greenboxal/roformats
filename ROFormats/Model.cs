@@ -254,54 +254,7 @@ namespace ROFormats
                     RotKeyFrames[i] = rfk;
                 }
 
-                CalcBoundingBox();
-
                 return true;
-            }
-
-            public void CalcBoundingBox()
-            {
-                boundingBox.Max[0] = boundingBox.Max[1] = boundingBox.Max[2] = -999999.0F;
-                boundingBox.Min[0] = boundingBox.Min[1] = boundingBox.Min[2] = 999999.0F;
-                	
-                float[] transf = new float[16];
-	            transf[0] = OffsetMT[0];
-	            transf[1] = OffsetMT[1];
-	            transf[2] = OffsetMT[2];
-	            transf[3] = 0;
-
-	            transf[4] = OffsetMT[3];
-	            transf[5] = OffsetMT[4];
-	            transf[6] = OffsetMT[5];
-	            transf[7] = 0;
-
-	            transf[8] = OffsetMT[6];
-	            transf[9] = OffsetMT[7];
-	            transf[10] = OffsetMT[8];
-	            transf[11] = 0;
-
-	            transf[12] = 0;
-	            transf[13] = 0;
-	            transf[14] = 0;
-	            transf[15] = 1;
-
-                Vertex v = new Vertex();
-
-                for (int i = 0; i < Vertices.Length; i++)
-                {
-                    MatrixMultVect(transf, Vertices[i], ref v);
-
-                    for (int j = 0; j < 3; j++)
-                    {
-                        if (!IsOnly) 
-                            v[j] += OffsetMT[9 + j];// + t.translate2.v[j];
-
-                        boundingBox.Min[j] = Math.Min(v[j], boundingBox.Min[j]);
-                        boundingBox.Max[j] = Math.Max(v[j], boundingBox.Max[j]);
-                    }
-                }
-
-                boundingBoxCalculated = true;
             }
 
             private void MatrixMultVect(float[] M, Vertex Vin, ref Vertex Vout)
@@ -313,15 +266,109 @@ namespace ROFormats
 
             private bool boundingBoxCalculated;
             private BoundingBox boundingBox;
+
+            public void CalcBoundingBox()
+            {
+                float[] transf = new float[16];
+                transf[0] = OffsetMT[0];
+                transf[1] = OffsetMT[1];
+                transf[2] = OffsetMT[2];
+                transf[3] = 0;
+
+                transf[4] = OffsetMT[3];
+                transf[5] = OffsetMT[4];
+                transf[6] = OffsetMT[5];
+                transf[7] = 0;
+
+                transf[8] = OffsetMT[6];
+                transf[9] = OffsetMT[7];
+                transf[10] = OffsetMT[8];
+                transf[11] = 0;
+
+                transf[12] = 0;
+                transf[13] = 0;
+                transf[14] = 0;
+                transf[15] = 1;
+
+                boundingBox.Max[0] = boundingBox.Max[1] = boundingBox.Max[2] = -999999.0F;
+                boundingBox.Min[0] = boundingBox.Min[1] = boundingBox.Min[2] = 999999.0F;
+
+                for (int i = 0; i < Vertices.Length; i++)
+                {
+                    Vertex v = new Vertex();
+
+                    MatrixMultVect(transf, Vertices[i], ref v);
+
+                    for (int j = 0; j < 3; j++)
+                    {
+                        float f;
+
+                        if (!IsOnly)
+                            f = v[j] + transf[12 + j] + transf[9 + j];
+                        else
+                            f = v[j];
+
+                        boundingBox.Min[j] = Math.Min(f, boundingBox.Min[j]);
+                        boundingBox.Max[j] = Math.Max(f, boundingBox.Max[j]);
+                    }
+                }
+
+                for (int i = 0; i < 3; i++)
+                    boundingBox.Range[i] = (boundingBox.Max[i] + boundingBox.Min[i]) / 2.0f;
+
+                boundingBoxCalculated = true;
+            }
         }
 
-        protected int animLen;
-        protected int shadeType;
-        protected byte alpha;
-        protected Texture[] textures;
-        protected string mainNode;
-        protected Node[] nodes;
-        protected VolumeBox[] volumeBoxes;
+        private int animLen;
+
+        public int AnimLen
+        {
+            get { return animLen; }
+            set { animLen = value; }
+        }
+        private int shadeType;
+
+        public int ShadeType
+        {
+            get { return shadeType; }
+            set { shadeType = value; }
+        }
+        private byte alpha;
+
+        public byte Alpha
+        {
+            get { return alpha; }
+            set { alpha = value; }
+        }
+        private Texture[] textures;
+
+        public Texture[] Textures
+        {
+            get { return textures; }
+            set { textures = value; }
+        }
+        private string mainNode;
+
+        public string MainNode
+        {
+            get { return mainNode; }
+            set { mainNode = value; }
+        }
+        private Node[] nodes;
+
+        public Node[] Nodes
+        {
+            get { return nodes; }
+            set { nodes = value; }
+        }
+        private VolumeBox[] volumeBoxes;
+
+        public VolumeBox[] VolumeBoxes
+        {
+            get { return volumeBoxes; }
+            set { volumeBoxes = value; }
+        }
 
         protected byte minorVersion;
         protected byte majorVersion;
@@ -449,16 +496,27 @@ namespace ROFormats
 
         private void CalcBoundingBox()
         {
-            nodes[0].CalcBoundingBox();
-            for (int i = 1; i < nodes.Length; i++)
-                if (nodes[i].ParentName == nodes[0].Name)
-                    CalcBoundingBox();
+            Node mainNode = FindNode(MainNode);
+
+            mainNode.CalcBoundingBox();
+            for (int i = 0; i < nodes.Length; i++)
+                if (nodes[i].ParentName == MainNode && nodes[i] != mainNode)
+                    nodes[i].CalcBoundingBox();
 
             for (int i = 0; i < 3; i++)
             {
-                boundingBox.Max[i] = nodes[0].GetBoundingBox().Max[i];
-                boundingBox.Min[i] = nodes[0].GetBoundingBox().Min[i];
-                boundingBox.Offset[i] = (boundingBox.Max[i] + boundingBox.Min[i]) / 2.0f;
+                boundingBox.Max[i] = mainNode.GetBoundingBox().Max[i];
+                boundingBox.Min[i] = mainNode.GetBoundingBox().Min[i];
+
+                for (int j = 0; j < nodes.Length; j++)
+                {
+                    if (nodes[j].ParentName == MainNode)
+                    {
+                        boundingBox.Max[i] = Math.Max(boundingBox.Max[i], nodes[j].GetBoundingBox().Max[i]);
+                        boundingBox.Min[i] = Math.Min(boundingBox.Min[i], nodes[j].GetBoundingBox().Min[i]);
+                    }
+                }
+
                 boundingBox.Range[i] = (boundingBox.Max[i] - boundingBox.Min[i]) / 2.0f;
             }
 
